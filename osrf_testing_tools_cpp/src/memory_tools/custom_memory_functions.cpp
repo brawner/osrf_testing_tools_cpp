@@ -140,13 +140,15 @@ custom_realloc_with_original_except(
     replacement_realloc_function_name);
   osrf_testing_tools_cpp::memory_tools::dispatch_realloc(factory.get_memory_tools_service());
 
+  static_assert(sizeof(uintmax_t) >= sizeof(void *), "Casting a (void *) to smaller integer type");
+  const uintmax_t memory_in_address = reinterpret_cast<uintmax_t>(memory_in);
   void * memory = original_realloc(memory_in, size);
   if (!factory.should_ignore()) {
     using osrf_testing_tools_cpp::memory_tools::realloc_expected;
     uint64_t fw_size = size;
     MALLOC_PRINTF(
-      " realloc (%s) %p %" PRIu64 " -> %p\n",
-      realloc_expected() ? "    expected" : "not expected", memory_in, fw_size, memory);
+      " realloc (%s) %" PRIuMAX " %" PRIu64 " -> %p\n",
+      realloc_expected() ? "    expected" : "not expected", memory_in_address, fw_size, memory);
     if (factory.should_print_backtrace()) {
       print_backtrace();
     }
@@ -284,12 +286,14 @@ custom_free_with_original_except(
   MemoryToolsServiceFactory factory(MemoryFunctionType::Free, replacement_free_function_name);
   osrf_testing_tools_cpp::memory_tools::dispatch_free(factory.get_memory_tools_service());
 
+  static_assert(sizeof(uintmax_t) >= sizeof(void *), "Casting a (void *) to smaller integer type");
+  const uintmax_t memory_address = reinterpret_cast<uintmax_t>(memory);
   original_free(memory);
   if (!factory.should_ignore()) {
     using osrf_testing_tools_cpp::memory_tools::free_expected;
     MALLOC_PRINTF(
-      " free    (%s) %p\n",
-      free_expected() ? "    expected" : "not expected", memory);
+      " free    (%s) %" PRIuMAX "\n",
+      free_expected() ? "    expected" : "not expected", memory_address);
   }
     if (factory.should_print_backtrace()) {
       print_backtrace();
